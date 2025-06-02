@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, RefreshCw, Copy, Send, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import emailjs from '@emailjs/browser';
 
 interface Contact {
   id: string;
@@ -92,8 +92,12 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
     setIsSending(true);
     
     try {
-      // Using EmailJS service for sending emails
-      const emailData = {
+      // EmailJS configuration - you'll need to set these up
+      const serviceId = 'YOUR_SERVICE_ID'; // Replace with your EmailJS service ID
+      const templateId = 'YOUR_TEMPLATE_ID'; // Replace with your EmailJS template ID
+      const publicKey = 'YOUR_PUBLIC_KEY'; // Replace with your EmailJS public key
+
+      const templateParams = {
         to_name: contact.name,
         to_email: contact.email,
         from_name: senderName,
@@ -102,11 +106,10 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
         subject: `🎉 Happy Birthday ${contact.name}!`
       };
 
-      // For now, we'll simulate the email sending
-      console.log('Sending email:', emailData);
+      console.log('Sending email via EmailJS:', templateParams);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, publicKey);
       
       toast({
         title: "Message sent successfully!",
@@ -116,7 +119,7 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
       console.error('Failed to send email:', error);
       toast({
         title: "Failed to send message",
-        description: "There was an error sending the birthday message. Please try again.",
+        description: "Please check your EmailJS configuration and try again.",
         variant: "destructive",
       });
     } finally {

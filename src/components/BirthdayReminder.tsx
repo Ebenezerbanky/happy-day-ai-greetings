@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, Gift, Send, RefreshCw, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import emailjs from '@emailjs/browser';
 
 interface Contact {
   id: string;
@@ -88,7 +88,12 @@ const BirthdayReminder = ({ contact, showDate = false }: BirthdayReminderProps) 
     try {
       const quickMessage = `🎉 Happy Birthday, ${contact.name}! 🎂 Wishing you a wonderful day filled with joy and celebration! Hope your special day is amazing! 🎈`;
       
-      const emailData = {
+      // EmailJS configuration - you'll need to set these up
+      const serviceId = 'YOUR_SERVICE_ID'; // Replace with your EmailJS service ID
+      const templateId = 'YOUR_TEMPLATE_ID'; // Replace with your EmailJS template ID
+      const publicKey = 'YOUR_PUBLIC_KEY'; // Replace with your EmailJS public key
+
+      const templateParams = {
         to_name: contact.name,
         to_email: contact.email,
         from_name: senderName,
@@ -97,10 +102,10 @@ const BirthdayReminder = ({ contact, showDate = false }: BirthdayReminderProps) 
         subject: `🎉 Happy Birthday ${contact.name}!`
       };
 
-      console.log('Sending quick birthday message:', emailData);
+      console.log('Sending quick birthday message via EmailJS:', templateParams);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, publicKey);
       
       toast({
         title: "Birthday message sent!",
@@ -112,7 +117,7 @@ const BirthdayReminder = ({ contact, showDate = false }: BirthdayReminderProps) 
       console.error('Failed to send message:', error);
       toast({
         title: "Failed to send message",
-        description: "There was an error sending the message. Please try again.",
+        description: "Please check your EmailJS configuration and try again.",
         variant: "destructive",
       });
     } finally {
