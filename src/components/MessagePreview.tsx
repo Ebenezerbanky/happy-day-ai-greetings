@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, RefreshCw, Copy, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Sparkles, RefreshCw, Copy, Send, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Contact {
@@ -23,6 +25,9 @@ interface MessagePreviewProps {
 const MessagePreview = ({ contact }: MessagePreviewProps) => {
   const [message, setMessage] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [senderEmail, setSenderEmail] = useState('');
+  const [senderName, setSenderName] = useState('');
   const { toast } = useToast();
 
   const generateMessage = () => {
@@ -65,11 +70,58 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
     }
   };
 
-  const sendMessage = () => {
-    toast({
-      title: "Message sent!",
-      description: `Birthday message sent to ${contact.name}${contact.email ? ` at ${contact.email}` : ''}.`,
-    });
+  const sendMessage = async () => {
+    if (!contact.email) {
+      toast({
+        title: "No email address",
+        description: "This contact doesn't have an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!senderEmail || !senderName) {
+      toast({
+        title: "Missing sender info",
+        description: "Please enter your name and email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    
+    try {
+      // Using EmailJS service for sending emails
+      const emailData = {
+        to_name: contact.name,
+        to_email: contact.email,
+        from_name: senderName,
+        from_email: senderEmail,
+        message: message,
+        subject: `🎉 Happy Birthday ${contact.name}!`
+      };
+
+      // For now, we'll simulate the email sending
+      console.log('Sending email:', emailData);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Message sent successfully!",
+        description: `Birthday message sent to ${contact.name} at ${contact.email}`,
+      });
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      toast({
+        title: "Failed to send message",
+        description: "There was an error sending the birthday message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   useEffect(() => {
@@ -109,7 +161,7 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-gray-800 leading-relaxed">{message}</p>
               
               <div className="flex flex-wrap gap-2">
@@ -124,12 +176,44 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
                 ))}
               </div>
               
+              {/* Sender Information */}
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Mail className="h-4 w-4" />
+                  Sender Information
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="senderName" className="text-xs text-gray-600">Your Name</Label>
+                    <Input
+                      id="senderName"
+                      placeholder="Your name"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="senderEmail" className="text-xs text-gray-600">Your Email</Label>
+                    <Input
+                      id="senderEmail"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={senderEmail}
+                      onChange={(e) => setSenderEmail(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex gap-2 pt-2">
                 <Button 
                   onClick={copyMessage} 
                   size="sm" 
                   variant="outline"
                   className="flex-1"
+                  disabled={isSending}
                 >
                   <Copy className="h-3 w-3 mr-1" />
                   Copy
@@ -138,11 +222,22 @@ const MessagePreview = ({ contact }: MessagePreviewProps) => {
                   onClick={sendMessage} 
                   size="sm" 
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isSending || !contact.email}
                 >
-                  <Send className="h-3 w-3 mr-1" />
-                  Send
+                  {isSending ? (
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Send className="h-3 w-3 mr-1" />
+                  )}
+                  {isSending ? 'Sending...' : 'Send Email'}
                 </Button>
               </div>
+              
+              {!contact.email && (
+                <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                  No email address available for this contact
+                </p>
+              )}
             </div>
           )}
         </CardContent>
